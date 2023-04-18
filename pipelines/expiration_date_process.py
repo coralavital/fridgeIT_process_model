@@ -7,7 +7,7 @@ def  run_expiration_date_workflow(string):
         string (str): string with date
 
     Returns:
-        str: the date that found from the string or not found
+        str: the date that found from the string or not fountded
     """
     # Define regex pattern for date format
     date_pattern_with_year = r'\d{1,2}[,./-:]\d{1,2}[,./-:]\d{1,4}'
@@ -22,9 +22,9 @@ def  run_expiration_date_workflow(string):
         if date.count('/') < 2 :
             date = fix_date(re.sub(r"\D", "", result[0]))
     if date == '':
-        return result[0] if result != None else 'not found'
+        return result[0] if result != None else 'not fountded'
         
-    return date if result != None else 'not found'
+    return date if result != None else 'not fountded'
 
 
 
@@ -32,12 +32,12 @@ def fix_date(date:str):
     """
     changing the format of the date to be dd/mm\n
     if the numbers of the date are non sense for example month or day with hte number 77\n
-    it will return not found\n
+    it will return not fountded\n
     Args:   
         date (str): the numbers of the date only
 
     Returns:
-        str: dd/mm date format or not found
+        str: dd/mm date format or not fountded
     """
     day = ''
     month = ''
@@ -57,6 +57,6 @@ def fix_date(date:str):
 
     #   in case we got invalid date
     if int(month) > 12 or int(day) > 31:
-        return "not found"
+        return "not fountded"
         
     return f"{day}/{month}"
