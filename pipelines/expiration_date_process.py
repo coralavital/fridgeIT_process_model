@@ -22,9 +22,9 @@ def  run_expiration_date_workflow(string):
         if date.count('/') < 2 :
             date = fix_date(re.sub(r"\D", "", result[0]))
     if date == '':
-        return result[0] if result != None else 'date not found'
+        return result[0] if result != None else 'not found'
         
-    return date if result != None else 'date not found'
+    return date if result != None else 'not found'
 
 
 
@@ -57,6 +57,6 @@ def fix_date(date:str):
 
     #   in case we got invalid date
     if int(month) > 12 or int(day) > 31:
-        return "date not found"
+        return "not found"
         
     return f"{day}/{month}"

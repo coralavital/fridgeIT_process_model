@@ -240,7 +240,8 @@ def update_user_document(product_obj):
         all_detected_products = doc_ref.get('all_detected_products')                
         if 'expiration_date' in product_obj:
             for index in range(0, len(recently_detected_products)):
-                if recently_detected_products[index]['expiration_date'] == 'Not'
+                if recently_detected_products[index]['expiration_date'] == 'not fountded':
+                    break
                 if(recently_detected_products[index]['name'].lower() == product_obj['name'] and recently_detected_products[index]['expiration_date'] == product_obj['expiration_date']):
                     recently_detected_products[index]['quantity'] += 1
                     user_document.update({'recently_detected_products': recently_detected_products})
