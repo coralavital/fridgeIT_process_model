@@ -65,6 +65,7 @@ cred = credentials.Certificate("./FBserviceAccountKey.json")
 initialize_app(cred, {'storageBucket': 'fridgeit-d17ae.appspot.com'})
 db = firestore.client()
 
+
 # file_name = 'current.png'
 cropped_folder_path = 'cropped/'
 history_cropped_path = 'cropped_history/'
@@ -181,15 +182,33 @@ def crop_and_store_finetune_classes(img, boxes, probs, captioner):
         im = Image.open('./uploads/{}'.format(crop_path))
         data = captioner(im)
         expiration_date_results = run_expiration_date_workflow(
-            data[0]['generated_text'], class_name)
-
-        product_obj = {'name': class_name.capitalize(), 'image': products_images[class_name],
-                        'expiration_date': expiration_date_results, 'created_date': date_time_str}
+            data[0]['generated_text'])
         
-        # Save the product in the recently detected product array in firebase firestore
-        user_document.update({"all_detected_products": firestore.ArrayUnion([product_obj])})
-        # Save the product in the recently detected product array in firebase firestore
-        user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
+        product_obj = {'name': class_name.capitalize(), 'image': products_images[class_name],
+                                'expiration_date': expiration_date_results, 'created_date': date_time_str, 'quantity': 1}
+        
+        doc_ref = user_document.get()
+        try:
+            if doc_ref['recently_detected_products'] is not None:
+                recently_detected_products = doc_ref.get('recently_detected_products')
+                if any(product['name'] == product_obj['name'] and product['exporation_date'] == product_obj['exporation_date'] for product in recently_detected_products):
+                    for index in range(0, len(recently_detected_products)):
+                        if product_obj['name'] == recently_detected_products[index]['name'] and product_obj['exporation_date'] == recently_detected_products[index]['exporation_date']:
+                            # // Atomically remove a region from the 'regions' array field.
+                            recently_detected_products[index]['quantity'] += 1
+                            user_document.update({'recently_detected_products': recently_detected_products})
+                            break
+            else:
+                # Save the product in the recently detected product array in firebase firestore
+                user_document.update({"all_detected_products": firestore.ArrayUnion([product_obj])})
+                # Save the product in the recently detected product array in firebase firestore
+                user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
+        except:
+            # Save the product in the recently detected product array in firebase firestore
+            user_document.update({"all_detected_products": firestore.ArrayUnion([product_obj])})
+            # Save the product in the recently detected product array in firebase firestore
+            user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
+        
             
         bucket = storage.bucket()
         blob = bucket.blob('cropped/{}'.format(crop_path))
@@ -228,15 +247,33 @@ def crop_and_store_coco_classes(img, boxes, probs):
         roi = crop(img, (x1, y1, x2, y2), saved_location)
         counter += 1
         
-        product_obj = {}
 
-        product_obj = {'name': class_name.capitalize(), 'image': products_images[class_name], 'created_date': date_time_str}
-    
+
+        
+        product_obj = {'name': class_name.capitalize(), 'image': products_images[class_name], 'created_date': date_time_str, 'quantity': 1}
+
+        
+        doc_ref = user_document.get()
+        try:
+            recently_detected_products = doc_ref.get('recently_detected_products')
+            if any(product['name'] == product_obj['name'] for product in recently_detected_products):
+                for index in range(0, len(recently_detected_products)):
+                    if product_obj['name'] == recently_detected_products[index]['name']:
+                        # // Atomically remove a region from the 'regions' array field.
+                        recently_detected_products[index]['quantity'] += 1
+                        user_document.update({'recently_detected_products': recently_detected_products})
+                        break
+                        
+            else:
+                # Save the product in the recently detected product array in firebase firestore
+                user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
+        except:
+            # Save the product in the recently detected product array in firebase firestore
+            user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
+
         # Save the product in the recently detected product array in firebase firestore
         user_document.update({"all_detected_products": firestore.ArrayUnion([product_obj])})
-        # Save the product in the recently detected product array in firebase firestore
-        user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
-        
+
         bucket = storage.bucket()
         blob = bucket.blob('cropped/{}'.format(crop_path))
         blob.upload_from_filename('./uploads/{}'.format(crop_path))    
