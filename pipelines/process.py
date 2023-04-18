@@ -233,39 +233,35 @@ def crop_and_store_coco_classes(img, boxes, probs):
         
 def update_user_document(product_obj):
     doc_ref = user_document.get()
-    if product_obj['name'] in finetuned_classes:
-        try:
-            if doc_ref['recently_detected_products'] is not None:
-                recently_detected_products = doc_ref.get('recently_detected_products')
-                if any(product['name'] == product_obj['name'] for product in recently_detected_products):
-                    for index in range(0, len(recently_detected_products)):
-                        if (product_obj['name'] == recently_detected_products[index]['name']) and (product_obj['exporation_date'] == recently_detected_products[index]['exporation_date']):
-                            # // Atomically remove a region from the 'regions' array field.
-                            recently_detected_products[index]['quantity'] += 1
-                            user_document.update({'recently_detected_products': recently_detected_products})
-                            break
+    # If the product has expiration date
+    if "recently_detected_products" in doc_ref.to_dict():
+        
+        recently_detected_products = doc_ref.get('recently_detected_products')        
+        all_detected_products = doc_ref.get('all_detected_products')                
+        if 'expiration_date' in product_obj:
+            for index in range(0, len(recently_detected_products)):
+                if recently_detected_products[index]['expiration_date'] == 'Not'
+                if(recently_detected_products[index]['name'].lower() == product_obj['name'] and recently_detected_products[index]['expiration_date'] == product_obj['expiration_date']):
+                    recently_detected_products[index]['quantity'] += 1
+                    user_document.update({'recently_detected_products': recently_detected_products})
+                    break
             else:
-                # Save the product in the recently detected product array in firebase firestore
                 user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
-        except:
-            user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
-    else:
-        try:
-            recently_detected_products = doc_ref.get('recently_detected_products')
-            if any(product['name'] == product_obj['name'] for product in recently_detected_products):
-                for index in range(0, len(recently_detected_products)):
-                    if product_obj['name'] == recently_detected_products[index]['name']:
-                        # // Atomically remove a region from the 'regions' array field.
+
+        else:               
+            for index in range(0, len(recently_detected_products)):
+                    if(recently_detected_products[index]['name'] == product_obj['name']):
                         recently_detected_products[index]['quantity'] += 1
                         user_document.update({'recently_detected_products': recently_detected_products})
                         break
-                        
             else:
-                # Save the product in the recently detected product array in firebase firestore
                 user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
-        except:
-            user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
 
+    # If the product has not expiration date
+    else:
+        user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
+        
+    del product_obj['quantity']
     # Save the product in the recently detected product array in firebase firestore
     user_document.update({"all_detected_products": firestore.ArrayUnion([product_obj])})
 
@@ -293,13 +289,13 @@ def main():
     # getting bboxes and probs
     finetune_prob, finetune_boxes = filter_bboxes_from_outputs(finetune_outputs, im=im)
     detr_prob, detr_boxes = filter_bboxes_from_outputs(detr_outputs, im=im)
-
+    
     # cropping finetuned products
     crop_and_store_finetune_classes(im, finetune_boxes, finetune_prob, captioner)
+    
     # cropping finetuned products
     crop_and_store_coco_classes(im, detr_boxes, detr_prob)
     
-
     return plot_finetuned_results(im, finetune_prob, finetune_boxes, detr_prob, detr_boxes)
 
 
