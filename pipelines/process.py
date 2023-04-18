@@ -117,7 +117,6 @@ def delete_old_detected_products():
 def load_model():
     detr_model = torch.hub.load('facebookresearch/detr', 'detr_resnet50', pretrained=True)
     
-    
     finetune_num_classes = 5
     finetune_detr_model = torch.hub.load('facebookresearch/detr',
                            'detr_resnet50',
@@ -211,7 +210,6 @@ def crop_and_store_coco_classes(img, boxes, probs):
         date_time_str = now.strftime("%Y-%m-%d@%H:%M:%S")
         prob = probs[ind]
         cl = prob.argmax()
-        print(cl)
 
         if coco_classes[cl] not in finetuned_classes:
             continue
@@ -273,7 +271,7 @@ def main():
     crop_and_store_coco_classes(im, detr_boxes, detr_prob)
     
 
-    return plot_finetuned_results(im, finetune_prob, finetune_boxes)
+    return plot_finetuned_results(im, finetune_prob, finetune_boxes, detr_prob, detr_boxes)
 
 
 if __name__ == '__main__':

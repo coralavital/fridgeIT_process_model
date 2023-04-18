@@ -6,9 +6,26 @@ from io import BytesIO
 
 
 ### Model vars and functions
-
+# Our fridgeIT dataset classes
 finetuned_classes = [
-    'butter', 'cottage', 'milk', 'mustard', 'cream'
+    'butter', 'cottage', 'milk', 'mustard', 'cream', 'banana', 'apple', 'orange', 'broccoli', 'carrot'
+]
+
+coco_classes = [
+    'N/A', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
+    'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'N/A',
+    'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse',
+    'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 'N/A', 'backpack',
+    'umbrella', 'N/A', 'N/A', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis',
+    'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove',
+    'skateboard', 'surfboard', 'tennis racket', 'bottle', 'N/A', 'wine glass',
+    'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich',
+    'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake',
+    'chair', 'couch', 'potted plant', 'bed', 'N/A', 'dining table', 'N/A',
+    'N/A', 'toilet', 'N/A', 'tv', 'laptop', 'mouse', 'remote', 'keyboard',
+    'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'N/A',
+    'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier',
+    'toothbrush'
 ]
 
 # colors for visualization
@@ -80,18 +97,28 @@ def get_image_finetuned_results(im, prob=None, boxes=None):
     # data = base64.b64encode(buf.getbuffer()).decode("ascii")
     return buf
 
-def plot_finetuned_results(im, prob=None, boxes=None):
+def plot_finetuned_results(im, finetune_prob=None, finetune_boxes=None, detr_prob=None, detr_boxes=None):
     plt.figure(figsize=(16,10))
     plt.imshow(im)
     ax = plt.gca()
     colors = COLORS * 100
     
-    if prob is not None and boxes is not None:
-        for p, (xmin, ymin, xmax, ymax), c in zip(prob, boxes.tolist(), colors):
+    if finetune_prob is not None and finetune_boxes is not None:
+        for p, (xmin, ymin, xmax, ymax), c in zip(finetune_prob, finetune_boxes.tolist(), colors):
             ax.add_patch(plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
                                         fill=False, color=c, linewidth=3))
             cl = p.argmax()
             text = f'{finetuned_classes[cl]}: {p[cl]:0.2f}'
+            ax.text(xmin, ymin, text, fontsize=15,
+                    bbox=dict(facecolor='black', alpha=0.5))
+    if detr_prob is not None and detr_boxes is not None:
+        for p, (xmin, ymin, xmax, ymax), c in zip(detr_prob, detr_boxes.tolist(), colors):
+            cl = p.argmax()
+            if coco_classes[cl] not in finetuned_classes:
+                continue
+            ax.add_patch(plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
+                                        fill=False, color=c, linewidth=3))
+            text = f'{coco_classes[cl]}: {p[cl]:0.2f}'
             ax.text(xmin, ymin, text, fontsize=15,
                     bbox=dict(facecolor='black', alpha=0.5))
     
