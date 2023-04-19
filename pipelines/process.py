@@ -18,7 +18,7 @@ from PIL import Image
 import torch
 
 
-source = "current_picture/current.png"
+source = "current_picture/current2.jpg"
 dest = './uploads/'
 local_history_cropped = './history_cropped/'
 
@@ -134,7 +134,7 @@ def crop_and_store_products(img, finetune_boxes, finetune_probs, detr_boxes, det
 # Save cropped images to firebase storage
 def save_cropped_image(img, class_name, score, box, current_date_and_time):
 
-    crop_path = '{}.png'.format(f'{class_name}#{score}')
+    crop_path = '{}.png'.format(f'{current_date_and_time}#{class_name}#{score}')
     saved_location = ('./uploads/{}'.format(crop_path))  
     
     crop(img, box, saved_location)
@@ -184,9 +184,9 @@ def update_user_document(product_obj):
 
     # If the product has not expiration date
     else:
-        user_document.update({'recently_detected_products': [product_obj]}) 
+        user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])}) 
         del product_obj['quantity']   
-        user_document.update({"all_detected_products": [product_obj]})
+        user_document.update({"all_detected_products": firestore.ArrayUnion([product_obj])})
 
 
 
