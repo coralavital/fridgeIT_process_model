@@ -81,7 +81,7 @@ def delete_cropped_images_from_storage():
     now = datetime.now()
 
     # convert to string
-    date_time_str = now.strftime("%Y-%m-%d@%H:%M:%S")
+    date_time_str = now.strftime("%Y-%m-%d#%H:%M:%S")
     count = 0
     
     # delete local history folder
@@ -97,12 +97,12 @@ def delete_cropped_images_from_storage():
     # download the last two croppen picture from the cropped folder in firebase storage
     for blob in blobs:
         # for every blob, download the blob picture
-        file = local_history_cropped+'{}@{}.png'.format(date_time_str, count)
+        file = local_history_cropped+'{}#{}.png'.format(date_time_str, count)
         blob.download_to_filename(file)
 
         # save the picture in the history_cropped folder in firebase storage
         history_blob = bucket.blob(
-            history_cropped_path + '{}@{}.png'.format(date_time_str, count))
+            history_cropped_path + '{}#{}.png'.format(date_time_str, count))
         history_blob.upload_from_filename(file)
 
         # delete the picture from the cropped folder in firebase storage
@@ -141,130 +141,109 @@ def get_image_from_storage():
     return img
 
 
-def crop(image_obj, coords, saved_location):
-    cropped_image = image_obj.crop(coords)
+def crop(image_obj, box, saved_location):
+    x1 = int(box[0])
+    y1 = int(box[1])
+    x2 = int(box[2])
+    y2 = int(box[3])
+    cropped_image = image_obj.crop((x1, y1, x2, y2))
     cropped_image.save(saved_location)
     cropped_image.show()
 
 
-# If the products class is in finetuned_classes it's mean that the product have expiration date
-# In thie case we want to get the expiration date of the product with jinhybr/OCR-Donut-CORD model.
-# After we finally get the expiration date of the product, we neew to update the specipic user documnet
-def crop_and_store_finetune_classes(img, boxes, probs, captioner):
-    counter = 0
-    
-    for ind, box in enumerate(boxes):
-        # current dateTime
-        now = datetime.now()
-
-        # convert to string
-        date_time_str = now.strftime("%Y-%m-%d@%H:%M:%S")
-        prob = probs[ind]
-        cl = prob.argmax()
-        product_class = f'{finetuned_classes[cl]}: {prob[cl]:0.2f}'
-        class_name = finetuned_classes[cl]
-
-        x1 = int(box[0])
-        y1 = int(box[1])
-        x2 = int(box[2])
-        y2 = int(box[3])
-
-        crop_path = '{}@{}.png'.format(product_class, counter)
-        saved_location = ('./uploads/{}'.format(crop_path))
-
-        roi = crop(img, (x1, y1, x2, y2), saved_location)
-        counter += 1
+def crop_and_store_products(img, finetune_boxes, finetune_probs, detr_boxes, detr_probs, captioner):    
         
-        product_obj = {}
-
-        im = Image.open('./uploads/{}'.format(crop_path))
-        data = captioner(im)
+    for ind, box in enumerate(finetune_boxes):
+        prob = finetune_probs[ind]
+        cl = prob.argmax()
+        
+        class_name = finetuned_classes[cl]
+        score = f'{prob[cl]:0.2f}'
+        cropped_image, product_obj = save_cropped_image(img,class_name, score, box)
+        # Get the expiration date of the product with jinhybr/OCR-Donut-CORD
+        data = captioner(cropped_image)
         expiration_date_results = run_expiration_date_workflow(
             data[0]['generated_text'])
         
-        product_obj = {'name': class_name.capitalize(), 'image': products_images[class_name],
-                                'expiration_date': expiration_date_results, 'created_date': date_time_str, 'quantity': 1}
+        product_obj['expiration_date'] = expiration_date_results
         
         update_user_document(product_obj)
         
-            
-        bucket = storage.bucket()
-        blob = bucket.blob('cropped/{}'.format(crop_path))
-        blob.upload_from_filename('./uploads/{}'.format(crop_path))  
         
-          
-
-def crop_and_store_coco_classes(img, boxes, probs):
-    counter = 0
-    
-    for ind, box in enumerate(boxes):
-        # current dateTime
-        now = datetime.now()
-
-        # convert to string
-        date_time_str = now.strftime("%Y-%m-%d@%H:%M:%S")
-        prob = probs[ind]
+    for ind, box in enumerate(detr_boxes):
+        prob = detr_probs[ind]
         cl = prob.argmax()
-
+        
         if coco_classes[cl] not in finetuned_classes:
             continue
-        product_class = f'{coco_classes[cl]}: {prob[cl]:0.2f}'
         class_name = coco_classes[cl]
-        
-
-        x1 = int(box[0])
-        y1 = int(box[1])
-        x2 = int(box[2])
-        y2 = int(box[3])
-
-        crop_path = '{}@{}.png'.format(product_class, counter)
-        saved_location = ('./uploads/{}'.format(crop_path))
-
-        roi = crop(img, (x1, y1, x2, y2), saved_location)
-        counter += 1
-        
-        product_obj = {'name': class_name.capitalize(), 'image': products_images[class_name], 'created_date': date_time_str, 'quantity': 1}
-
+        score = f'{prob[cl]:0.2f}'
+        cropped_image, product_obj = save_cropped_image(img,class_name, score, box)
         update_user_document(product_obj)
+
         
-        bucket = storage.bucket()
-        blob = bucket.blob('cropped/{}'.format(crop_path))
-        blob.upload_from_filename('./uploads/{}'.format(crop_path))    
+# Save cropped images to firebase storage
+def save_cropped_image(img, class_name, score, box):
+        
+    # current dateTime
+    now = datetime.now()
+    # convert to string
+    date_time_str = now.strftime("%Y-%m-%d#%H:%M:%S")
+
+    crop_path = '{}.png'.format(f'{class_name}#{score}')
+    saved_location = ('./uploads/{}'.format(crop_path))  
+    
+    crop(img, box, saved_location)
+       
+    bucket = storage.bucket()
+    blob = bucket.blob('cropped/{}'.format(crop_path))
+    blob.upload_from_filename('./uploads/{}'.format(crop_path))
+    
+    im = Image.open('./uploads/{}'.format(crop_path))
+    product_obj = {'name': class_name.capitalize(), 'image': products_images[class_name],
+                    'created_date': date_time_str, 'quantity': 1, 'score': f'{score}'} 
+    return img, product_obj
+   
         
 def update_user_document(product_obj):
     doc_ref = user_document.get()
     # If the product has expiration date
-    if "recently_detected_products" in doc_ref.to_dict():
-        
-        recently_detected_products = doc_ref.get('recently_detected_products')        
-        all_detected_products = doc_ref.get('all_detected_products')                
+    if "recently_detected_products" in doc_ref.to_dict() :
+        recently_detected_products = doc_ref.get('recently_detected_products')     
+        all_detected_products = doc_ref.get('all_detected_products')  
+        # update recent_detected_products array       
         if 'expiration_date' in product_obj:
-            for index in range(0, len(recently_detected_products)):
-                if recently_detected_products[index]['expiration_date'] == 'not fountded':
-                    break
-                if(recently_detected_products[index]['name'].lower() == product_obj['name'] and recently_detected_products[index]['expiration_date'] == product_obj['expiration_date']):
-                    recently_detected_products[index]['quantity'] += 1
+            for product in recently_detected_products:
+                if product['expiration_date'] == 'not founded':
+                    continue
+                if(product['name'].lower() == product_obj['name'] and 
+                   product['expiration_date'] == product_obj['expiration_date'] and
+                   product['score'] == product_obj['score']):
+                    product['quantity'] += 1
+                    product['created_date'] = product_obj['created_date']
                     user_document.update({'recently_detected_products': recently_detected_products})
                     break
             else:
                 user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
 
         else:               
-            for index in range(0, len(recently_detected_products)):
-                    if(recently_detected_products[index]['name'] == product_obj['name']):
-                        recently_detected_products[index]['quantity'] += 1
+            for product in recently_detected_products:
+                    if(product['name'] == product_obj['name'] and product['score'] == product_obj['score']):
+                        product['quantity'] += 1
+                        product['created_date'] = product_obj['created_date']
                         user_document.update({'recently_detected_products': recently_detected_products})
                         break
             else:
                 user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
+        # update all_detected_products array 
+        del product_obj['quantity']  
+        user_document.update({"all_detected_products": firestore.ArrayUnion([product_obj])})
 
     # If the product has not expiration date
     else:
-        user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
-        
-    del product_obj['quantity']
-    # Save the product in the recently detected product array in firebase firestore
-    user_document.update({"all_detected_products": firestore.ArrayUnion([product_obj])})
+        user_document.update({'recently_detected_products': [product_obj]}) 
+        del product_obj['quantity']   
+        user_document.update({"all_detected_products": [product_obj]})
 
 
 
@@ -288,16 +267,16 @@ def main():
     detr_outputs, finetune_outputs = run_worflow(im, detr, finetune)
     
     # getting bboxes and probs
-    finetune_prob, finetune_boxes = filter_bboxes_from_outputs(finetune_outputs, im=im)
-    detr_prob, detr_boxes = filter_bboxes_from_outputs(detr_outputs, im=im)
+    finetune_probs, finetune_boxes = filter_bboxes_from_outputs(finetune_outputs, im=im)
+    detr_probs, detr_boxes = filter_bboxes_from_outputs(detr_outputs, im=im)
     
     # cropping finetuned products
-    crop_and_store_finetune_classes(im, finetune_boxes, finetune_prob, captioner)
+    crop_and_store_products(im, finetune_boxes, finetune_probs, detr_boxes, detr_probs, captioner)
     
     # cropping finetuned products
-    crop_and_store_coco_classes(im, detr_boxes, detr_prob)
+    #crop_and_store_coco_classes(im, detr_boxes, detr_prob)
     
-    return plot_finetuned_results(im, finetune_prob, finetune_boxes, detr_prob, detr_boxes)
+    return plot_finetuned_results(im, finetune_probs, finetune_boxes, detr_probs, detr_boxes)
 
 
 if __name__ == '__main__':
