@@ -18,7 +18,7 @@ from PIL import Image
 import torch
 
 
-source = "current_picture/current2.jpg"
+source = "current_picture/current1.jpg"
 dest = './uploads/'
 local_history_cropped = './history_cropped/'
 
@@ -106,7 +106,7 @@ def crop_and_store_products(img, finetune_boxes, finetune_probs, detr_boxes, det
         
         class_name = finetuned_classes[cl]
         score = f'{prob[cl]:0.2f}'
-        cropped_image, product_obj = save_cropped_image(img,class_name, score, box, current_date_and_time)
+        cropped_image, product_obj = save_cropped_image(img, class_name, score, box, current_date_and_time)
         
         # Get the expiration date of the product with jinhybr/OCR-Donut-CORD
         data = captioner(cropped_image)
@@ -144,49 +144,49 @@ def save_cropped_image(img, class_name, score, box, current_date_and_time):
     
     im = Image.open('./uploads/{}'.format(crop_path))
     product_obj = {'name': class_name.capitalize(), 'image': products_image_list[class_name],
-                    'created_date': current_date_and_time, 'quantity': 1, 'score': f'{score}'} 
+                    'created_date': current_date_and_time, 'score': f'{score}'} 
     return img, product_obj
    
         
 def update_user_document(product_obj):
-    doc_ref = user_document.get()
-    # If the product has expiration date
-    if "recently_detected_products" in doc_ref.to_dict() :
-        recently_detected_products = doc_ref.get('recently_detected_products')     
-        # update recent_detected_products array       
-        if 'expiration_date' in product_obj:
-            for product in recently_detected_products:
-                if product['expiration_date'] == 'not founded':
-                    continue
-                if(product['name'].lower() == product_obj['name'] and 
-                   product['expiration_date'] == product_obj['expiration_date'] and
-                   product['created_date'] == product_obj['created_date'] and
-                   product['score'] == product_obj['score']):
-                    product['quantity'] += 1
-                    product['created_date'] = product_obj['created_date']
-                    user_document.update({'recently_detected_products': recently_detected_products})
-                    break
-            else:
-                user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
+    # doc_ref = user_document.get()
+    # # If the product has expiration date
+    # if "recently_detected_products" in doc_ref.to_dict() :
+    #     recently_detected_products = doc_ref.get('recently_detected_products')     
+    #     # update recent_detected_products array       
+    #     if 'expiration_date' in product_obj:
+    #         for product in recently_detected_products:
+    #             if product['expiration_date'] == 'not founded':
+    #                 continue
+    #             if(product['name'].lower() == product_obj['name'] and 
+    #                product['expiration_date'] == product_obj['expiration_date'] and
+    #                product['created_date'] == product_obj['created_date'] and
+    #                product['score'] == product_obj['score']):
+    #                 product['quantity'] += 1
+    #                 product['created_date'] = product_obj['created_date']
+    #                 user_document.update({'recently_detected_products': recently_detected_products})
+    #                 break
+    #         else:
+    #             user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
 
-        else:               
-            for product in recently_detected_products:
-                    if(product['name'] == product_obj['name'] and product['score'] == product_obj['score']):
-                        product['quantity'] += 1
-                        product['created_date'] = product_obj['created_date']
-                        user_document.update({'recently_detected_products': recently_detected_products})
-                        break
-            else:
-                user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
-        # update all_detected_products array 
-        del product_obj['quantity']  
-        user_document.update({"all_detected_products": firestore.ArrayUnion([product_obj])})
+    #     else:               
+    #         for product in recently_detected_products:
+    #                 if(product['name'] == product_obj['name'] and product['score'] == product_obj['score']):
+    #                     product['quantity'] += 1
+    #                     product['created_date'] = product_obj['created_date']
+    #                     user_document.update({'recently_detected_products': recently_detected_products})
+    #                     break
+    #         else:
+    #             user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])})
+    #     # update all_detected_products array 
+    #     del product_obj['quantity']  
+    #     user_document.update({"all_detected_products": firestore.ArrayUnion([product_obj])})
 
-    # If the product has not expiration date
-    else:
-        user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])}) 
-        del product_obj['quantity']   
-        user_document.update({"all_detected_products": firestore.ArrayUnion([product_obj])})
+    # # If the product has not expiration date
+    # else:
+    user_document.update({'recently_detected_products': firestore.ArrayUnion([product_obj])}) 
+        # del product_obj['quantity']   
+    user_document.update({"all_detected_products": firestore.ArrayUnion([product_obj])})
 
 
 
