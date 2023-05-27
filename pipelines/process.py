@@ -18,7 +18,7 @@ from PIL import Image
 import torch
 
 
-source = "current_picture/current1.jpg"
+source = "current_picture/current5.png"
 dest = './uploads/'
 local_history_cropped = './history_cropped/'
 
@@ -66,15 +66,21 @@ def load_model():
     detr_model = torch.hub.load('facebookresearch/detr', 'detr_resnet50', pretrained=True)
     
     finetune_num_classes = 5
+    # finetune_detr_model = torch.hub.load('facebookresearch/detr',
+    #                        'detr_resnet50',
+    #                        pretrained=False,
+    #                        num_classes=finetune_num_classes)
+
+    # # Loading checkpoint
+    # checkpoint = torch.load('./detr_model/checkpoint.pth', map_location='cpu')
+    state_dict = torch.load('./detr_model/model.pt')
     finetune_detr_model = torch.hub.load('facebookresearch/detr',
-                           'detr_resnet50',
-                           pretrained=False,
-                           num_classes=finetune_num_classes)
+                        'detr_resnet50',
+                        pretrained=False,
+                        num_classes=finetune_num_classes)
+    finetune_detr_model.load_state_dict(state_dict)
 
-    # Loading checkpoint
-    checkpoint = torch.load('./detr_model/checkpoint.pth', map_location='cpu')
-
-    finetune_detr_model.load_state_dict(checkpoint['model'], strict=False)
+    # finetune_detr_model.load_state_dict(checkpoint['model'], strict=False)
 
     return detr_model.eval(), finetune_detr_model.eval()
 
