@@ -19,3 +19,5 @@ coco_classes = [
     'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier',
     'toothbrush'
 ]
+
+

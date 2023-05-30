@@ -10,3 +10,7 @@ products_image_list = {
     'mustart': 'https://firebasestorage.googleapis.com/v0/b/fridgeit-d17ae.appspot.com/o/products%2Fmustard.png?alt=media&token=f1c46b16-0821-4d37-aab7-2da248c7c938',
     'oragne': 'https://firebasestorage.googleapis.com/v0/b/fridgeit-d17ae.appspot.com/o/products%2Forange.png?alt=media&token=d5535d47-fdc9-4c5a-b229-81cfd0bab91d',
 }
+
+
+
+

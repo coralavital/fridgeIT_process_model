@@ -1,3 +1,4 @@
+import datetime
 import re
 
 def  run_expiration_date_workflow(string):
@@ -7,7 +8,7 @@ def  run_expiration_date_workflow(string):
         string (str): string with date
 
     Returns:
-        str: the date that found from the string or not founded
+        str: the date that found from the string or not found
     """
     # Define regex pattern for date format
     date_pattern_with_year = r'\d{1,2}[,./-:]\d{1,2}[,./-:]\d{1,4}'
@@ -17,20 +18,33 @@ def  run_expiration_date_workflow(string):
     if result == None:
         date_pattern = r'\d{1,2}[,./-:]\d{1,2}([,./-:]\d{1,4})?'
         result = re.search(date_pattern, string)
+        if result != None:
+            date = fix_date(re.sub(r"\D", "", result[0]))
+
     elif result != None:
         date = re.sub(r"[^\d]", "/", result[0])
         if date.count('/') < 2 :
             date = fix_date(re.sub(r"\D", "", result[0]))
+
+
+    if date.count('/') == 2:
+        year = '20'+date[-2:]
+        date = date[:-2] + year
+
+
+    elif date.count('/') == 1:
+        date += '/' + datetime.date.today().strftime("%Y")
+
     if date == '':
-        return result[0] if result != None else 'not founded'
+        return result[0] if result != None else 'not found'
         
-    return date if result != None else 'not founded'
+    return date if result != None else 'not found'
 
 
 
 def fix_date(date:str):
     """
-    changing the format of the date to be dd/mm\n
+    changing the format of the date to be dd/mm \n
     if the numbers of the date are non sense for example month or day with hte number 77\n
     it will return not founded\n
     Args:   

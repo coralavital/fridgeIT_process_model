@@ -27,7 +27,7 @@ def rescale_bboxes(out_bbox, size):
     return b
 
 def filter_bboxes_from_outputs(outputs,im,
-                               threshold=0.8):
+                               threshold=0.7):
   
   # keep only predictions with confidence above threshold
   probas = outputs['pred_logits'].softmax(-1)[0, :, :-1]
