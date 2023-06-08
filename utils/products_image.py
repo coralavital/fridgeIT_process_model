@@ -7,7 +7,7 @@ products_image_list = {
     'cottage': 'https://firebasestorage.googleapis.com/v0/b/fridgeit-d17ae.appspot.com/o/products%2Fcottage.png?alt=media&token=2ceeee96-7c51-4080-a5ed-a7034e1416a5',
     'cream': 'https://firebasestorage.googleapis.com/v0/b/fridgeit-d17ae.appspot.com/o/products%2FsweetCream.png?alt=media&token=1476c48e-bcf2-4a7c-92ac-22220a772b0f',
     'milk': 'https://firebasestorage.googleapis.com/v0/b/fridgeit-d17ae.appspot.com/o/products%2Fmilk.png?alt=media&token=c436b7ba-626a-4d4d-8fd0-ddc1c63f02fe',
-    'mustart': 'https://firebasestorage.googleapis.com/v0/b/fridgeit-d17ae.appspot.com/o/products%2Fmustard.png?alt=media&token=f1c46b16-0821-4d37-aab7-2da248c7c938',
+    'mustard': 'https://firebasestorage.googleapis.com/v0/b/fridgeit-d17ae.appspot.com/o/products%2Fmustard.png?alt=media&token=f1c46b16-0821-4d37-aab7-2da248c7c938',
     'oragne': 'https://firebasestorage.googleapis.com/v0/b/fridgeit-d17ae.appspot.com/o/products%2Forange.png?alt=media&token=d5535d47-fdc9-4c5a-b229-81cfd0bab91d',
 }
 

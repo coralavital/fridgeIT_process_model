@@ -18,7 +18,7 @@ from PIL import Image
 import torch
 
 
-source = "current_picture/current6.jpeg"
+source = "current_picture/current5.jpeg"
 dest = './uploads/'
 local_history_cropped = './history_cropped/'
 
@@ -81,7 +81,7 @@ def get_image_from_storage():
     blob = bucket.blob(source)
     file = dest + 'current.png'
     blob.download_to_filename(file)
-    img = Image.open(file)
+    img = Image.open(file).convert('RGB')
     return img
 
 
