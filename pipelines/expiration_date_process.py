@@ -36,9 +36,9 @@ def  run_expiration_date_workflow(string):
         date += '/' + datetime.date.today().strftime("%Y")
 
     if date == '':
-        return result[0] if result != None else 'not found'
+        return result[0] if result != None else 'not founded'
         
-    return date if result != None else 'not found'
+    return date if result != None else 'not founded'
 
 
 
