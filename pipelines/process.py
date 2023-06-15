@@ -143,7 +143,7 @@ def save_cropped_image(img, class_name, score, box, current_date_and_time):
     im = Image.open('./uploads/{}'.format(crop_path))
     product_obj = {'name': class_name.capitalize(), 'image': products_image_list[class_name],
                     'created_date': current_date_and_time, 'score': f'{score}'} 
-    return img, product_obj
+    return im, product_obj
    
         
 def update_user_document(product_obj):
