@@ -18,7 +18,7 @@ from PIL import Image
 import torch
 
 
-source = "current_picture/current5.jpeg"
+source = "current_picture/current1.jpeg"
 dest = './uploads/'
 local_history_cropped = './history_cropped/'
 
