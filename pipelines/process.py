@@ -17,7 +17,13 @@ from datetime import datetime
 from PIL import Image
 import torch
 
+""" 
+We provide four images from the current_picture in our firbase storage.
+This images include an objects from our classes.
 
+You can use the following names of images as a value for source variable :
+    current1.jpg , current2.jpeg, current3.jpeg, current4.jpeg
+"""
 source = "current_picture/current1.jpeg"
 dest = './uploads/'
 local_history_cropped = './history_cropped/'
